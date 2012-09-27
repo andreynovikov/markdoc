@@ -3,6 +3,7 @@
 import os.path as p
 
 from markdoc.config import Config
+from markdoc.mdx import delins, subscript, superscript
 import markdown
 
 
@@ -69,11 +70,20 @@ def get_markdown_instance(config, curr_path='/', **extra_config):
     """Return a `markdown.Markdown` instance for a given configuration."""
     
     mdconfig = dict(
-        extensions=config['markdown.extensions'],
         extension_configs=unflatten_extension_configs(config),
         safe_mode=config['markdown.safe-mode'],
         output_format=config['markdown.output-format'])
     
+    extensions = dict((x, x) for x in config['markdown.extensions'])
+    
+    if 'delins' in extensions:
+        extensions['delins'] = delins.makeExtension()
+    if 'subscript' in extensions:
+        extensions['subscript'] = subscript.makeExtension()
+    if 'superscript' in extensions:
+        extensions['superscript'] = superscript.makeExtension()
+    
+    mdconfig['extensions'] = extensions.values()
     mdconfig.update(extra_config) # Include any extra kwargs.
     
     md_instance = markdown.Markdown(**mdconfig)
