@@ -6,13 +6,8 @@ import os.path as p
 
 import webob
 
+from markdoc.config import Config
 from markdoc.render import make_relative
-
-
-if not mimetypes.inited:
-    mimetypes.init()
-# Assume all HTML files are XHTML.
-mimetypes.types_map['.html'] = mimetypes.types_map['.xhtml']
 
 
 class MarkdocWSGIApplication(object):
@@ -81,7 +76,7 @@ class MarkdocWSGIApplication(object):
         path_parts = request.path_info.strip('/').split('/')
         index_filename = p.join(self.config.html_dir, *(path_parts + ['index.html']))
         if p.exists(index_filename) and self.is_safe(index_filename):
-            return serve_file(index_filename)
+            return serve_file(index_filename, self.config['markdown.output-format'])
         
         directory_filename = p.join(self.config.html_dir, *path_parts)
         if p.isfile(directory_filename) or p.isfile(directory_filename + p.extsep + 'html'):
@@ -116,7 +111,7 @@ class MarkdocWSGIApplication(object):
                 return temp_redirect(request.path_info + '/')
             return self.not_found(request)
         
-        return serve_file(filename)
+        return serve_file(filename, self.config['markdown.output-format'])
     
     def error(self, request, status):
         
@@ -189,7 +184,7 @@ temp_redirect = lambda location: redirect(location, permanent=False)
 perm_redirect = lambda location: redirect(location, permanent=True)
 
 
-def serve_file(filename, content_type=None, chunk_size=4096):
+def serve_file(filename, fmt='html5', chunk_size=4096):
     
     """
     Serve the specified file as a chunked response.
@@ -199,15 +194,14 @@ def serve_file(filename, content_type=None, chunk_size=4096):
     
     You can also specify a content type with the `content_type` keyword
     argument. If you do not, the content type will be inferred from the
-    filename; so 'index.html' will be interpreted as 'application/xhtml+xml',
-    'file.mp3' as 'audio/mpeg', et cetera. If none can be guessed, the content
-    type will be reported as 'application/octet-stream'.
+    filename; so 'index.html' will be interpreted as 'text/html', 'file.mp3'
+    as 'audio/mpeg', et cetera. If none can be guessed, the content type
+    will be reported as 'application/octet-stream'.
     """
     
-    if content_type is None:
-        content_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
-    
-    if content_type.startswith('text/html'):
+    content_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+
+    if fmt == 'xhtml1'  and content_type.startswith('text/html'):
         content_type = content_type.replace('text/html', 'application/xhtml+xml')
     
     def chunked_read(chunk_size=4096):
