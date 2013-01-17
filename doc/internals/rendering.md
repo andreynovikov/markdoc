@@ -29,7 +29,8 @@ If `use-default-templates` is `false` and the templates are not defined in your 
     {
       "content": "<h1>...", # The XHTML for the document.
       "title": "Some Document", # The extracted title of the document.
-      "crumbs": [("index", "/"), ("some-document", None)] # Breadcrumbs
+      "crumbs": [("index", "/"), ("some-document", None)], # Breadcrumbs
+      "path": "some-document" # Root-relative path to document
     }
 
 The `config` variable is also (globally) set to the configuration dictionary for the current wiki.

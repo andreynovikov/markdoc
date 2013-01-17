@@ -180,6 +180,7 @@ class Builder(object):
         context['content'] = self.render(path)
         context['title'] = self.title(path)
         context['crumbs'] = self.crumbs(path)
+        context['path'] = p.splitext(path)[0]
         context['make_relative'] = lambda href: make_relative(path, href)
         
         template = self.config.template_env.get_template('document.html')
