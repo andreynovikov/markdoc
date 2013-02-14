@@ -252,20 +252,30 @@ def build(config, args):
     
     builder = Builder(config)
     for rel_filename in builder.walk():
-        html = builder.render_document(rel_filename)
-        out_filename = p.join(config.temp_dir,
-            p.splitext(rel_filename)[0] + p.extsep + 'html')
+        is_source = builder.valid_extension(rel_filename)
+        
+        if is_source:
+            out_filename = p.join(config.temp_dir,
+                p.splitext(rel_filename)[0] + p.extsep + 'html')
+        else:
+            out_filename = p.join(config.temp_dir, rel_filename)
         
         if not p.exists(p.dirname(out_filename)):
             log.debug('makedirs %s' % p.dirname(out_filename))
             os.makedirs(p.dirname(out_filename))
         
         log.debug('Creating %s' % p.relpath(out_filename, start=config.temp_dir))
-        fp = codecs.open(out_filename, 'w', encoding='utf-8')
-        try:
-            fp.write(html)
-        finally:
-            fp.close()
+        
+        if is_source:
+            html = builder.render_document(rel_filename)
+            fp = codecs.open(out_filename, 'w', encoding='utf-8')
+            try:
+                fp.write(html)
+            finally:
+                fp.close()
+        else:
+            in_filename = p.join(config.wiki_dir, rel_filename)
+            shutil.copyfile(in_filename, out_filename)
     
     sync_html(config, args)
     build_listing(config, args)
